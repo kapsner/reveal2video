@@ -10,7 +10,7 @@ So I finally came up with this (mostly vibe-coded using [gemini-cli](https://git
 - **Audio Synchronization**: Maps audio files to specific slides/fragments using [reveal.js](https://github.com/hakimel/reveal.js) conventions (`H.V.webm` or `H.V.F.webm`).
 - **Precision Timing**: Extracts exact audio durations using [`ffprobe`](https://ffmpeg.org/ffprobe.html) to ensure the video stays in sync.
 - **Headless Rendering**: Works in the background without needing a visible browser window.
-- **1080p Quality**: Captures and encodes at Full HD resolution.
+- **1440p Quality**: Captures and encodes at Wide Quad HD resolution.
 
 ## System Requirements
 
