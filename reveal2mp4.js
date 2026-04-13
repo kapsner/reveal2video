@@ -17,18 +17,25 @@ const help = argv.includes('--help') || argv.includes('-h');
 const noSandbox = argv.includes('--no-sandbox');
 const disableSetuidSandbox = argv.includes('--disable-setuid-sandbox');
 
-// Find concurrency flag
+// Find browser/concurrency flags
 let concurrency = os.cpus().length;
+let browserPath = null;
+
 const jIdx = argv.findIndex(arg => arg === '-j' || arg === '--concurrency');
 if (jIdx !== -1 && argv[jIdx + 1]) {
   const val = parseInt(argv[jIdx + 1]);
   if (!isNaN(val)) concurrency = val;
 }
 
+const bIdx = argv.findIndex(arg => arg === '--browser' || arg === '--chrome-path');
+if (bIdx !== -1 && argv[bIdx + 1]) {
+  browserPath = argv[bIdx + 1];
+}
+
 // Filter out flags and their values from arguments
 const args = argv.filter((arg, i) => {
   if (arg.startsWith('--') || arg.startsWith('-')) return false;
-  if (i > 0 && (argv[i-1] === '-j' || argv[i-1] === '--concurrency')) return false;
+  if (i > 0 && (argv[i-1] === '-j' || argv[i-1] === '--concurrency' || argv[i-1] === '--browser' || argv[i-1] === '--chrome-path')) return false;
   return true;
 });
 
@@ -37,12 +44,32 @@ if (args.length < 1 || help) {
   console.log('Usage: reveal2mp4 [options] <html-file> [output.mp4]');
   console.log('\nOptions:');
   console.log('  -j, --concurrency <n>    Number of parallel encoding jobs (default: CPU cores)');
+  console.log('  --browser <path>         Path to Chromium/Chrome executable');
   console.log('  --no-sandbox             Disable Puppeteer sandbox (use with caution)');
   console.log('  --disable-setuid-sandbox Disable Puppeteer setuid sandbox (use with caution)');
   console.log('\nRequirements:');
   console.log('  - Node.js, Puppeteer');
   console.log('  - FFmpeg and FFprobe installed in PATH');
   process.exit(0);
+}
+
+function findChrome() {
+  const platform = os.platform();
+  const paths = {
+    linux: ['/usr/bin/google-chrome', '/usr/bin/chromium', '/usr/bin/chromium-browser'],
+    darwin: ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Chromium.app/Contents/MacOS/Chromium'],
+    win32: [
+      path.join(os.homedir(), 'AppData\\Local\\Google\\Chrome\\Application\\chrome.exe'),
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe'
+    ]
+  };
+
+  const possiblePaths = paths[platform] || [];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
 }
 
 const activeProcesses = new Set();
@@ -135,10 +162,22 @@ async function run() {
     if (noSandbox) puppeteerArgs.push('--no-sandbox');
     if (disableSetuidSandbox) puppeteerArgs.push('--disable-setuid-sandbox');
 
-    browser = await puppeteer.launch({
+    const launchOptions = {
       headless: "new",
       args: puppeteerArgs
-    });
+    };
+
+    if (browserPath) {
+      launchOptions.executablePath = browserPath;
+    } else {
+      const found = findChrome();
+      if (found) {
+        console.log(`>>> Automatically detected browser: ${found}`);
+        launchOptions.executablePath = found;
+      }
+    }
+
+    browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
     await page.setViewport({ width: 1920, height: 1080 });
 
@@ -146,7 +185,7 @@ async function run() {
     await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle2' });
 
     // Wait for Reveal to be ready
-    await page.waitForFunction(() => typeof Reveal !== 'undefined' && Reveal.isReady(), { timeout: 10000 });
+    await page.waitForFunction('typeof Reveal !== "undefined" && Reveal.isReady()', { timeout: 10000 });
 
     // Inject CSS to disable transitions and animations for instant rendering
     await page.addStyleTag({
@@ -170,14 +209,14 @@ async function run() {
     });
 
     // Get Audio Config from Reveal
-    const audioConfig = await page.evaluate(() => {
+    const audioConfig = await page.evaluate(`(() => {
       const config = Reveal.getConfig().audio || {};
       return {
         prefix: config.prefix || './audio/',
         suffix: config.suffix || '.webm',
         defaultDuration: config.defaultDuration || 5
       };
-    });
+    })()`);
 
     // Security check: ensure prefix and suffix don't contain path traversal
     if (audioConfig.prefix.includes('..') || audioConfig.suffix.includes('..') || audioConfig.prefix.startsWith('/')) {
@@ -189,14 +228,14 @@ async function run() {
 
     // Navigate to start
     console.log('>>> Extracting Slides and Fragments...');
-    await page.evaluate(() => Reveal.slide(0, 0, -1));
+    await page.evaluate('Reveal.slide(0, 0, -1)');
 
     let step = 0;
     while (hasMore) {
       // Small safety delay to ensure DOM is settled
       await new Promise(r => setTimeout(r, 100));
 
-      const indices = await page.evaluate(() => Reveal.getIndices());
+      const indices = await page.evaluate('Reveal.getIndices()');
       const h = indices.h;
       const v = indices.v;
       const f = (indices.f === undefined || indices.f === -1) ? null : indices.f;
@@ -217,16 +256,15 @@ async function run() {
       states.push({ screenshotPath, audioPath, duration, label: `${h}.${v}${f !== null ? '.' + f : ''}` });
 
       // Go to next state
-      hasMore = await page.evaluate(() => {
+      hasMore = await page.evaluate(`(() => {
         const currentIndices = Reveal.getIndices();
         Reveal.next();
         const nextIndices = Reveal.getIndices();
         return currentIndices.h !== nextIndices.h || currentIndices.v !== nextIndices.v || currentIndices.f !== nextIndices.f;
-      });
+      })()`);
 
       step++;
     }
-
     await browser.close();
     browser = null;
     console.log(`>>> Captured ${states.length} states.`);

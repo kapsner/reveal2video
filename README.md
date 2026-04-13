@@ -53,13 +53,14 @@ Run the script directly using Node:
 | Flag | Description |
 | :--- | :--- |
 | `-j`, `--concurrency <n>` | Number of parallel encoding jobs. Defaults to the number of CPU cores. |
+| `--browser <path>` | Path to Chromium/Chrome executable. If not provided, the tool will try to detect it automatically on your system. |
 | `--no-sandbox` | Disables the Puppeteer sandbox. Use only in trusted environments (e.g., specific Docker containers). |
 | `--disable-setuid-sandbox` | Disables the setuid sandbox for Puppeteer. |
 | `--help`, `-h` | Show usage information and available options. |
 
 ## Compiling to an Executable
 
-You can compile the tool into a standalone binary using `pkg`. Note that while this bundles the Node.js code, **FFmpeg and Chromium must still be installed on the host system**.
+You can compile the tool into a standalone binary using `pkg`. Note that while this bundles the Node.js code, **FFmpeg and Chromium must still be installed on the host system**. The binary will attempt to locate a system-installed Chrome/Chromium if no `--browser` path is specified.
 
 1. Install `pkg` globally:
    ```bash

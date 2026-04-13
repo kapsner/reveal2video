@@ -7,11 +7,12 @@
 
 ### New Features
 
-- improved error handling (90f5b1c)
+- improved error handling (71e3e96)
 - parallel rendering for increased performance (08052dc)
 
 ### Other changes
 
+- robust find-chromium fun (2568326)
 - updated docs and hide audio-controls for taking screenshots (9022514)
 - configured pre-commit hooks (e2f68fb)
 - configured pre-commit hooks (7374bd5)
