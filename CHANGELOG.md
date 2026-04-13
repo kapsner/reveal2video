@@ -13,7 +13,8 @@
 
 ### Other changes
 
-- printing duration of the cmd-run at the end (b8f3716)
+- video resolution to wqhd (11ecd82)
+- printing duration of the cmd-run at the end (ab15071)
 - default concurrency to 2 (18b17bf)
 - robust find-chromium fun (2cc1e25)
 - updated docs and hide audio-controls for taking screenshots (9022514)

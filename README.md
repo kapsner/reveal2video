@@ -112,7 +112,7 @@ The tool uses the following default settings for video and audio encoding:
 
 | Parameter | Default Value | Description |
 | :--- | :--- | :--- |
-| **Video Resolution** | 1920 x 1080 (1080p) | Standard Full HD resolution. |
+| **Video Resolution** | 2560 x 1440 (1440) | WQHD (Wide Quad HD) |
 | **Frame Rate** | 25 FPS | Standard cinematic frame rate. |
 | **Video Codec** | libx264 (H.264) | High compatibility across all devices and players. |
 | **Pixel Format** | yuv420p | Required for broad hardware player compatibility. |

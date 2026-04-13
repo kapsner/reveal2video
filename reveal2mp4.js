@@ -180,7 +180,7 @@ async function run() {
 
     browser = await puppeteer.launch(launchOptions);
     const page = await browser.newPage();
-    await page.setViewport({ width: 1920, height: 1080 });
+    await page.setViewport({ width: 2560, height: 1440 });
 
     console.log(`>>> Loading Slideshow: ${htmlFile}...`);
     await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle2' });
@@ -288,7 +288,7 @@ async function run() {
             '-loop', '1', '-i', s.screenshotPath,
             '-i', s.audioPath,
             '-c:v', 'libx264', '-t', s.duration.toString(),
-            '-pix_fmt', 'yuv420p', '-vf', 'scale=1920:1080',
+            '-pix_fmt', 'yuv420p', '-vf', 'scale=2560:1440',
             '-c:a', 'aac', '-b:a', '192k',
             segmentPath
           ];
@@ -298,7 +298,7 @@ async function run() {
             '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
             '-loop', '1', '-i', s.screenshotPath,
             '-c:v', 'libx264', '-t', s.duration.toString(),
-            '-pix_fmt', 'yuv420p', '-vf', 'scale=1920:1080',
+            '-pix_fmt', 'yuv420p', '-vf', 'scale=2560:1440',
             '-c:a', 'aac', '-shortest',
             segmentPath
           ];
