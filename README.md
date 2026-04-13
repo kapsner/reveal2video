@@ -68,6 +68,34 @@ You can compile the tool into a standalone binary using `pkg`. Note that while t
    ./reveal2mp4 /path/to/slideshow.html
    ```
 
+### Making the tool available system-wide
+
+To run the tool from anywhere in your terminal without specifying the path to the binary, you can move it to a folder in your system's `PATH`.
+
+1. **Create a `bin` directory** in your home folder (if it doesn't exist):
+   ```bash
+   mkdir -p ~/bin
+   ```
+
+2. **Move the binary** to that directory:
+   ```bash
+   mv reveal2mp4 ~/bin/
+   ```
+
+3. **Add `~/bin` to your `PATH`**:
+   Add the following line to your shell configuration file (e.g., `~/.bashrc`, `~/.zshrc`):
+   ```bash
+   export PATH="$HOME/bin:$PATH"
+   ```
+   Then, reload your configuration:
+   ```bash
+   source ~/.bashrc  # or ~/.zshrc
+   ```
+
+Now you can simply run `reveal2mp4 slideshow.html` from any directory.
+
+
+
 ## Technical Specifications
 
 The tool uses the following default settings for video and audio encoding:

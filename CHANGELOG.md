@@ -2,7 +2,8 @@
 
 ### Documentation
 
-- updated reamde (b6f998a)
+- added system-wide install instructions (dfe1593)
+- updated reamde (94e4ca8)
 
 ### Other changes
 
