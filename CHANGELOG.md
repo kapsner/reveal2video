@@ -13,7 +13,8 @@
 
 ### Other changes
 
-- default concurrency to 2 (c6be872)
+- printing duration of the cmd-run at the end (b8f3716)
+- default concurrency to 2 (18b17bf)
 - robust find-chromium fun (2cc1e25)
 - updated docs and hide audio-controls for taking screenshots (9022514)
 - configured pre-commit hooks (e2f68fb)

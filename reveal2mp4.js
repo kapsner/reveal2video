@@ -151,6 +151,7 @@ async function getAudioDuration(filePath) {
 }
 
 async function run() {
+  const startTime = Date.now();
   let browser;
   let tmpDir;
   try {
@@ -329,6 +330,9 @@ async function run() {
     ], { cwd: tmpDir });
 
     console.log(`\n>>> Success! Video saved to: ${outputFile}`);
+    const durationMs = Date.now() - startTime;
+    const durationSec = (durationMs / 1000).toFixed(2);
+    console.log(`>>> Total Duration: ${durationSec}s`);
 
   } catch (err) {
     console.error('\n>>> Error occurred:', err.message);
