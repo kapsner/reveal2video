@@ -52,6 +52,7 @@ Run the script directly using Node:
 
 | Flag | Description |
 | :--- | :--- |
+| `-j`, `--concurrency <n>` | Number of parallel encoding jobs. Defaults to the number of CPU cores. |
 | `--no-sandbox` | Disables the Puppeteer sandbox. Use only in trusted environments (e.g., specific Docker containers). |
 | `--disable-setuid-sandbox` | Disables the setuid sandbox for Puppeteer. |
 | `--help`, `-h` | Show usage information and available options. |

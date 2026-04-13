@@ -7,7 +7,7 @@
  */
 
 const puppeteer = require('puppeteer');
-const { spawnSync } = require('child_process');
+const { spawnSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -17,13 +17,26 @@ const help = argv.includes('--help') || argv.includes('-h');
 const noSandbox = argv.includes('--no-sandbox');
 const disableSetuidSandbox = argv.includes('--disable-setuid-sandbox');
 
-// Filter out flags from arguments
-const args = argv.filter(arg => !arg.startsWith('--') && !arg.startsWith('-'));
+// Find concurrency flag
+let concurrency = os.cpus().length;
+const jIdx = argv.findIndex(arg => arg === '-j' || arg === '--concurrency');
+if (jIdx !== -1 && argv[jIdx + 1]) {
+  const val = parseInt(argv[jIdx + 1]);
+  if (!isNaN(val)) concurrency = val;
+}
+
+// Filter out flags and their values from arguments
+const args = argv.filter((arg, i) => {
+  if (arg.startsWith('--') || arg.startsWith('-')) return false;
+  if (i > 0 && (argv[i-1] === '-j' || argv[i-1] === '--concurrency')) return false;
+  return true;
+});
 
 if (args.length < 1 || help) {
   console.log('Reveal.js to MP4 Converter');
   console.log('Usage: reveal2mp4 [options] <html-file> [output.mp4]');
   console.log('\nOptions:');
+  console.log('  -j, --concurrency <n>    Number of parallel encoding jobs (default: CPU cores)');
   console.log('  --no-sandbox             Disable Puppeteer sandbox (use with caution)');
   console.log('  --disable-setuid-sandbox Disable Puppeteer setuid sandbox (use with caution)');
   console.log('\nRequirements:');
@@ -41,6 +54,26 @@ function runCommand(cmd, args, options = {}) {
     throw new Error(`Command failed with exit code ${result.status}: ${cmd} ${args.join(' ')}\n${result.stderr}`);
   }
   return result.stdout;
+}
+
+function asyncRunCommand(cmd, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, options);
+    let stderr = '';
+    child.stderr.on('data', (data) => {
+      stderr += data.toString();
+    });
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Command failed with exit code ${code}: ${cmd} ${args.join(' ')}\n${stderr}`));
+      } else {
+        resolve();
+      }
+    });
+    child.on('error', (err) => {
+      reject(err);
+    });
+  });
 }
 
 const htmlFile = path.resolve(args[0]);
@@ -194,40 +227,49 @@ async function run() {
     console.log(`>>> Captured ${states.length} states.`);
 
     // Encoding segments
-    console.log('>>> Encoding Video Segments...');
+    console.log(`>>> Encoding Video Segments (concurrency: ${concurrency})...`);
     const segments = [];
-    for (let i = 0; i < states.length; i++) {
-      const s = states[i];
-      const segmentPath = path.join(tmpDir, `segment_${i.toString().padStart(4, '0')}.mp4`);
+    const queue = states.map((s, i) => ({ s, i }));
+    let completed = 0;
 
-      process.stdout.write(`    [${i+1}/${states.length}] State ${s.label} (${s.duration.toFixed(2)}s)... `);
+    async function worker() {
+      while (queue.length > 0) {
+        const { s, i } = queue.shift();
+        const segmentPath = path.join(tmpDir, `segment_${i.toString().padStart(4, '0')}.mp4`);
 
-      if (s.audioPath) {
-          runCommand('ffmpeg', [
-              '-y', '-v', 'error',
-              '-loop', '1', '-i', s.screenshotPath,
-              '-i', s.audioPath,
-              '-c:v', 'libx264', '-t', s.duration.toString(),
-              '-pix_fmt', 'yuv420p', '-vf', 'scale=1920:1080',
-              '-c:a', 'aac', '-b:a', '192k',
-              segmentPath
-          ]);
-      } else {
-          runCommand('ffmpeg', [
-              '-y', '-v', 'error',
-              '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-              '-loop', '1', '-i', s.screenshotPath,
-              '-c:v', 'libx264', '-t', s.duration.toString(),
-              '-pix_fmt', 'yuv420p', '-vf', 'scale=1920:1080',
-              '-c:a', 'aac', '-shortest',
-              segmentPath
-          ]);
+        let ffmpegArgs;
+        if (s.audioPath) {
+          ffmpegArgs = [
+            '-y', '-v', 'error',
+            '-loop', '1', '-i', s.screenshotPath,
+            '-i', s.audioPath,
+            '-c:v', 'libx264', '-t', s.duration.toString(),
+            '-pix_fmt', 'yuv420p', '-vf', 'scale=1920:1080',
+            '-c:a', 'aac', '-b:a', '192k',
+            segmentPath
+          ];
+        } else {
+          ffmpegArgs = [
+            '-y', '-v', 'error',
+            '-f', 'lavfi', '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
+            '-loop', '1', '-i', s.screenshotPath,
+            '-c:v', 'libx264', '-t', s.duration.toString(),
+            '-pix_fmt', 'yuv420p', '-vf', 'scale=1920:1080',
+            '-c:a', 'aac', '-shortest',
+            segmentPath
+          ];
+        }
+
+        await asyncRunCommand('ffmpeg', ffmpegArgs);
+        completed++;
+        process.stdout.write(`\r    Progress: ${completed}/${states.length} segments encoded...`);
+        segments[i] = segmentPath;
       }
-
-      console.log('Done.');
-      segments.push(segmentPath);
     }
 
+    const workers = Array.from({ length: Math.min(concurrency, states.length) }, worker);
+    await Promise.all(workers);
+    console.log('\n>>> All segments encoded.');
     // Final concatenation
     const concatFile = path.join(tmpDir, 'concat.txt');
     const concatContent = segments.map(s => `file '${path.basename(s)}'`).join('\n');
