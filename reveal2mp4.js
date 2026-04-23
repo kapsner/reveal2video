@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * reveal2mp4 - Convert Reveal.js slideshow with audio to MKV
+ * reveal2video - Convert Reveal.js slideshow with audio to MKV
  *
- * Usage: ./reveal2mp4.js <html-file> [output.mkv]
+ * Usage: ./reveal2video.js <html-file> [output.mkv]
  */
 
 const puppeteer = require('puppeteer');
@@ -51,7 +51,7 @@ const args = argv.filter((arg, i) => {
 
 if (args.length < 1 || help) {
   console.log('Reveal.js to MKV Converter');
-  console.log('Usage: reveal2mp4 [options] <html-file> [output.mkv]');
+  console.log('Usage: reveal2video [options] <html-file> [output.mkv]');
   console.log('\nOptions:');
   console.log('  -j, --concurrency <n>    Number of parallel encoding jobs (default: 2)');
   console.log('  --browser <path>         Path to Chromium/Chrome executable');
@@ -165,7 +165,7 @@ async function run() {
   let browser;
   let tmpDir;
   try {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reveal2mp4-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'reveal2video-'));
     console.log(`>>> Using temporary directory: ${tmpDir}`);
 
     console.log('>>> Initializing Browser...');

@@ -1,8 +1,8 @@
-# `reveal2mp4` - Reveal.js to MKV Converter
+# `reveal2video` - Reveal.js to MKV Converter
 
 I was tired of endless recording sessions using [OBS](https://github.com/obsproject/obs-studio) (great tool BTW) watching my [reveal.js](https://github.com/hakimel/reveal.js) slideshows with audio-playback only to "convert" them into an MP4 video.
 
-So I finally came up with this (mostly vibe-coded using [gemini-cli](https://github.com/google-gemini/gemini-cli)) terminal-based tool to render a [reveal.js](https://github.com/hakimel/reveal.js) slideshow with audio-playback (e.g. using [`audio-slideshow`](https://github.com/rajgoel/reveal.js-plugins/blob/master/audio-slideshow/README.md) or its Quarto-port [`audio-slideshow`](https://github.com/kapsner/audio-slideshow)) directly into a high-quality MKV video. Under the hood, `reveal2mp4` launches a browser and captures snapshots by navigating through slides and fragments. Available audio files are automatically mapped to each screenshot, ensuring synchronization of slide and fragment transitions with their corresponding audio files.
+So I finally came up with this (mostly vibe-coded using [gemini-cli](https://github.com/google-gemini/gemini-cli)) terminal-based tool to render a [reveal.js](https://github.com/hakimel/reveal.js) slideshow with audio-playback (e.g. using [`audio-slideshow`](https://github.com/rajgoel/reveal.js-plugins/blob/master/audio-slideshow/README.md) or its Quarto-port [`audio-slideshow`](https://github.com/kapsner/audio-slideshow)) directly into a high-quality MKV video. Under the hood, `reveal2video` launches a browser and captures snapshots by navigating through slides and fragments. Available audio files are automatically mapped to each screenshot, ensuring synchronization of slide and fragment transitions with their corresponding audio files.
 
 ## Features
 
@@ -32,7 +32,7 @@ Puppeteer requires a browser to render the slides. Usually, it downloads a local
 
 1. Navigate to the tool directory:
    ```bash
-   cd reveal2mp4
+   cd reveal2video
    ```
 
 2. Install dependencies:
@@ -45,7 +45,7 @@ Puppeteer requires a browser to render the slides. Usually, it downloads a local
 Run the script directly using Node:
 
 ```bash
-./reveal2mp4.js [options] <html-file> [output.mkv]
+./reveal2video.js [options] <html-file> [output.mkv]
 ```
 
 ### Options
@@ -69,13 +69,13 @@ You can compile the tool into a standalone binary using `pkg`. Note that while t
 
 2. Compile for your platform (example for Linux):
    ```bash
-   pkg . --targets node18-linux-x64 --output reveal2mp4
+   pkg . --targets node18-linux-x64 --output reveal2video
    ```
    *(Replace `linux` with `macos` or `win` as needed).*
 
 3. Run the binary:
    ```bash
-   ./reveal2mp4 /path/to/slideshow.html
+   ./reveal2video /path/to/slideshow.html
    ```
 
 ### Making the tool available system-wide
@@ -89,7 +89,7 @@ To run the tool from anywhere in your terminal without specifying the path to th
 
 2. **Move the binary** to that directory:
    ```bash
-   mv reveal2mp4 ~/bin/
+   mv reveal2video ~/bin/
    ```
 
 3. **Add `~/bin` to your `PATH`**:
@@ -102,9 +102,9 @@ To run the tool from anywhere in your terminal without specifying the path to th
    source ~/.bashrc  # or ~/.zshrc
    ```
 
-Now you can simply run `reveal2mp4 slideshow.html` from any directory.
+Now you can simply run `reveal2video slideshow.html` from any directory.
 
-:bulb: Tip: to use puppeteer's chromium, you can find out its path by running `node -e 'console.log(require("puppeteer").executablePath())'` in a shell and provide the resulting path with the `--browser` flag to the reveal2mp4 executable.
+:bulb: Tip: to use puppeteer's chromium, you can find out its path by running `node -e 'console.log(require("puppeteer").executablePath())'` in a shell and provide the resulting path with the `--browser` flag to the reveal2video executable.
 
 ## Technical Specifications
 

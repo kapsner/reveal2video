@@ -1,5 +1,5 @@
 {
-  "name": "reveal2mp4",
+  "name": "reveal2video",
   "version": "1.0.0",
   "description": "Convert Reveal.js slideshow with audio to MP4",
   "main": "index.js",
@@ -7,6 +7,6 @@
     "puppeteer": "^22.15.0"
   },
   "bin": {
-    "reveal2mp4": "./reveal2mp4.js"
+    "reveal2video": "./reveal2video.js"
   }
 }

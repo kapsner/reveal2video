@@ -5,8 +5,8 @@
 node_modules/
 
 # Temporary directories and files
-.tmp_reveal2mp4/
-tmp_reveal2mp4/
+.tmp_reveal2video/
+tmp_reveal2video/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -17,8 +17,8 @@ yarn-error.log*
 Thumbs.db
 
 # Executables and build outputs
-reveal2mp4
-reveal2mp4-bin
+reveal2video
+reveal2video-bin
 *.exe
 *.bin
 
@@ -28,7 +28,8 @@ reveal2mp4-bin
 
 !.gitignore
 !package.json
-!reveal2mp4.js
+!reveal2video.js
+!build.sh
 
 !README.md
 !LICENSE.md
