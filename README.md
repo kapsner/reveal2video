@@ -1,8 +1,8 @@
-# `reveal2video` - Reveal.js to MKV Converter
+# `reveal2video` - Reveal.js to Video Converter
 
 I was tired of endless recording sessions using [OBS](https://github.com/obsproject/obs-studio) (great tool BTW) watching my [reveal.js](https://github.com/hakimel/reveal.js) slideshows with audio-playback only to "convert" them into an HQ video (*.mkv).
 
-So I finally came up with this (mostly vibe-coded using [gemini-cli](https://github.com/google-gemini/gemini-cli)) terminal-based tool to render a [reveal.js](https://github.com/hakimel/reveal.js) slideshow with audio-playback (e.g. using [`audio-slideshow`](https://github.com/rajgoel/reveal.js-plugins/blob/master/audio-slideshow/README.md) or its Quarto-port [`audio-slideshow`](https://github.com/kapsner/audio-slideshow)) directly into a high-quality MKV video. Under the hood, `reveal2video` launches a browser and captures snapshots by navigating through slides and fragments. Available audio files are automatically mapped to each screenshot, ensuring synchronization of slide and fragment transitions with their corresponding audio files.
+So I finally came up with this (mostly vibe-coded using [gemini-cli](https://github.com/google-gemini/gemini-cli)) terminal-based tool to render a [reveal.js](https://github.com/hakimel/reveal.js) slideshow with audio-playback (using [`audio-slideshow`](https://github.com/rajgoel/reveal.js-plugins/blob/master/audio-slideshow/README.md) or its Quarto-port [`audio-slideshow`](https://github.com/kapsner/audio-slideshow)) directly into a high-quality MKV video. Under the hood, `reveal2video` launches a browser and captures snapshots by navigating through slides and fragments. Available audio files are automatically mapped to each screenshot, ensuring synchronization of slide and fragment transitions with their corresponding audio files.
 
 ## Features
 
