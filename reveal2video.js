@@ -24,17 +24,25 @@ const FRAME_RATE = '25';
 
 const argv = process.argv.slice(2);
 const help = argv.includes('--help') || argv.includes('-h');
+const dryRun = argv.includes('--dry-run') || argv.includes('-d');
 const noSandbox = argv.includes('--no-sandbox');
 const disableSetuidSandbox = argv.includes('--disable-setuid-sandbox');
 
 // Find browser/concurrency flags
 let concurrency = 2;
 let browserPath = null;
+let settlingDelay = 300;
 
 const jIdx = argv.findIndex(arg => arg === '-j' || arg === '--concurrency');
 if (jIdx !== -1 && argv[jIdx + 1]) {
   const val = parseInt(argv[jIdx + 1]);
   if (!isNaN(val)) concurrency = val;
+}
+
+const tIdx = argv.findIndex(arg => arg === '-t' || arg === '--delay');
+if (tIdx !== -1 && argv[tIdx + 1]) {
+  const val = parseInt(argv[tIdx + 1]);
+  if (!isNaN(val)) settlingDelay = val;
 }
 
 const bIdx = argv.findIndex(arg => arg === '--browser' || arg === '--chrome-path');
@@ -45,7 +53,7 @@ if (bIdx !== -1 && argv[bIdx + 1]) {
 // Filter out flags and their values from arguments
 const args = argv.filter((arg, i) => {
   if (arg.startsWith('--') || arg.startsWith('-')) return false;
-  if (i > 0 && (argv[i-1] === '-j' || argv[i-1] === '--concurrency' || argv[i-1] === '--browser' || argv[i-1] === '--chrome-path')) return false;
+  if (i > 0 && (argv[i-1] === '-j' || argv[i-1] === '--concurrency' || argv[i-1] === '--browser' || argv[i-1] === '--chrome-path' || argv[i-1] === '-t' || argv[i-1] === '--delay')) return false;
   return true;
 });
 
@@ -53,6 +61,8 @@ if (args.length < 1 || help) {
   console.log('Reveal.js to MKV Converter');
   console.log('Usage: reveal2video [options] <html-file> [output.mkv]');
   console.log('\nOptions:');
+  console.log('  -d, --dry-run            Dry run: capture screenshots and save as PDF');
+  console.log('  -t, --delay <ms>         Delay in ms to wait for DOM to settle (default: 300)');
   console.log('  -j, --concurrency <n>    Number of parallel encoding jobs (default: 2)');
   console.log('  --browser <path>         Path to Chromium/Chrome executable');
   console.log('  --no-sandbox             Disable Puppeteer sandbox (use with caution)');
@@ -124,7 +134,8 @@ if (!fs.existsSync(htmlFile)) {
     process.exit(1);
 }
 
-const outputFile = args[1] || htmlFile.replace(/\.html$/, '.mkv');
+const defaultExt = dryRun ? '.pdf' : '.mkv';
+const outputFile = args[1] || htmlFile.replace(/\.html$/, defaultExt);
 if (path.resolve(outputFile) === htmlFile) {
     console.error('Error: Output file must be different from input file.');
     process.exit(1);
@@ -244,27 +255,40 @@ async function run() {
     let step = 0;
     while (hasMore) {
       // Small safety delay to ensure DOM is settled
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise(r => setTimeout(r, settlingDelay));
 
       const indices = await page.evaluate('Reveal.getIndices()');
       const h = indices.h;
       const v = indices.v;
       const f = (indices.f === undefined || indices.f === -1) ? null : indices.f;
+      const label = `${h}.${v}${f !== null ? '.' + f : ''}`;
 
-      const screenshotPath = path.join(tmpDir, `step_${step.toString().padStart(4, '0')}.png`);
-      await page.screenshot({ path: screenshotPath });
+      process.stdout.write(`\r    Progress: Capturing state ${step + 1} (Slide ${label})...`);
+
+      const ext = dryRun ? 'jpg' : 'png';
+      const screenshotPath = path.join(tmpDir, `step_${step.toString().padStart(4, '0')}.${ext}`);
+
+      const screenshotOptions = { path: screenshotPath };
+      if (dryRun) {
+        screenshotOptions.type = 'jpeg';
+        screenshotOptions.quality = 85;
+      }
+      await page.screenshot(screenshotOptions);
 
       // Identify audio file
       let audioFileName = `${h}.${v}${f !== null ? '.' + f : ''}${audioConfig.suffix}`;
       let audioPath = path.join(path.dirname(htmlFile), audioConfig.prefix, audioFileName);
 
-      let duration = await getAudioDuration(audioPath);
-      if (!duration) {
-        duration = audioConfig.defaultDuration;
-        audioPath = null;
+      let duration = null;
+      if (!dryRun) {
+        duration = await getAudioDuration(audioPath);
+        if (!duration) {
+          duration = audioConfig.defaultDuration;
+          audioPath = null;
+        }
       }
 
-      states.push({ screenshotPath, audioPath, duration, label: `${h}.${v}${f !== null ? '.' + f : ''}` });
+      states.push({ screenshotPath, audioPath, duration, label });
 
       // Go to next state
       hasMore = await page.evaluate(`(() => {
@@ -276,9 +300,52 @@ async function run() {
 
       step++;
     }
+
+    if (dryRun) {
+      console.log('\n>>> Generating PDF...');
+      const pdfPage = await browser.newPage();
+
+      const imgTags = states.map(s => `<img src="file://${s.screenshotPath}" style="width: 100%; height: auto; display: block; page-break-after: always;">`).join('\n');
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <style>
+              body { margin: 0; padding: 0; background: white; }
+              img { width: 100%; height: auto; display: block; page-break-after: always; }
+              img:last-child { page-break-after: avoid; }
+            </style>
+          </head>
+          <body>
+            ${imgTags}
+          </body>
+        </html>
+      `;
+
+      const pdfHtmlPath = path.join(tmpDir, 'pdf_export.html');
+      fs.writeFileSync(pdfHtmlPath, htmlContent);
+
+      await pdfPage.goto(`file://${pdfHtmlPath}`, { waitUntil: 'networkidle0' });
+      await pdfPage.pdf({
+        path: path.resolve(outputFile),
+        width: `${OUTPUT_WIDTH}px`,
+        height: `${OUTPUT_HEIGHT}px`,
+        printBackground: true,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 }
+      });
+
+      await browser.close();
+      browser = null;
+      console.log(`\n>>> Success! PDF saved to: ${outputFile}`);
+      const durationMs = Date.now() - startTime;
+      const durationSec = (durationMs / 1000).toFixed(2);
+      console.log(`>>> Total Duration: ${durationSec}s`);
+      return;
+    }
+
     await browser.close();
     browser = null;
-    console.log(`>>> Captured ${states.length} states.`);
+    console.log(`\n>>> Captured ${states.length} states.`);
 
     // Encoding segments
     console.log(`>>> Encoding Video Segments (concurrency: ${concurrency})...`);

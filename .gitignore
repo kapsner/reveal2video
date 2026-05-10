@@ -34,3 +34,8 @@ reveal2video-bin
 !README.md
 !LICENSE.md
 !CHANGELOG.md
+
+!tests/
+!tests/fixtures/
+!tests/fixtures/*.html
+!tests/*.js

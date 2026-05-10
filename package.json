@@ -1,10 +1,13 @@
 {
   "name": "reveal2video",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Convert Reveal.js slideshow with audio to HQ video (*.mkv).",
-  "main": "index.js",
+  "main": "reveal2video.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  },
   "dependencies": {
-    "puppeteer": "^22.15.0"
+    "puppeteer": "^24.43.0"
   },
   "bin": {
     "reveal2video": "./reveal2video.js"

@@ -7,8 +7,10 @@ So I finally came up with this (mostly vibe-coded using [gemini-cli](https://git
 ## Features
 
 - **Automated Capture**: Uses [Puppeteer](https://github.com/puppeteer/puppeteer) to navigate through slides and fragments.
+- **Dry Run (PDF Export)**: Capture all slides and fragments and save them as a high-quality PDF.
 - **Audio Synchronization**: Maps audio files to specific slides/fragments using [reveal.js](https://github.com/hakimel/reveal.js) conventions (`H.V.webm` or `H.V.F.webm`).
 - **Precision Timing**: Extracts exact audio durations using [`ffprobe`](https://ffmpeg.org/ffprobe.html) to ensure the video stays in sync.
+- **Configurable Settling Delay**: Adjustable timeout to ensure the DOM is fully rendered before capturing screenshots.
 - **Headless Rendering**: Works in the background without needing a visible browser window.
 - **Optimized Quality**: Captures at 1440p (QHD) and renders at 1080p (FHD) for superior sharpness (supersampling).
 
@@ -52,6 +54,8 @@ Run the script directly using Node:
 
 | Flag | Description |
 | :--- | :--- |
+| `-d`, `--dry-run` | Dry run: capture screenshots and save as PDF instead of video. |
+| `-t`, `--delay <ms>` | Delay in milliseconds to wait for the DOM to settle before each screenshot. Defaults to 300ms. |
 | `-j`, `--concurrency <n>` | Number of parallel encoding jobs. Defaults to 2. |
 | `--browser <path>` | Path to Chromium/Chrome executable. If not provided, the tool will try to detect it automatically on your system. |
 | `--no-sandbox` | Disables the Puppeteer sandbox. Use only in trusted environments (e.g., specific Docker containers). |
@@ -72,6 +76,9 @@ You can compile the tool into a standalone binary using `pkg`. Note that while t
    pkg . --targets node18-linux-x64 --output reveal2video
    ```
    *(Replace `linux` with `macos` or `win` as needed).*
+
+   > [!NOTE]
+   > You might see warnings like `Failed to make bytecode` for `typed-query-selector`. These are caused by Puppeteer's TypeScript definition files and **can be safely ignored**. The resulting binary will function correctly.
 
 3. Run the binary:
    ```bash
