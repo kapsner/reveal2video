@@ -64,23 +64,24 @@ Run the script directly using Node:
 
 ## Compiling to an Executable
 
-You can compile the tool into a standalone binary using `pkg`. Note that while this bundles the Node.js code, **FFmpeg and Chromium must still be installed on the host system**. The binary will attempt to locate a system-installed Chrome/Chromium if no `--browser` path is specified.
+You can compile the tool into a standalone binary using `@yao-pkg/pkg` (or the included npm build script). Note that while this bundles the Node.js code, **FFmpeg and Chromium must still be installed on the host system**. The binary will attempt to locate a system-installed Chrome/Chromium if no `--browser` path is specified.
 
-1. Install `pkg` globally:
+1. Build using npm (bundles with `esbuild` and packages targeting Node 22):
    ```bash
-   npm install -g pkg
+   npm run build
    ```
-
-2. Compile for your platform (example for Linux):
+   *Or run the build script:*
    ```bash
-   pkg . --targets node18-linux-x64 --output reveal2video
+   ./build.sh
+   ```
+   *Or manually:*
+   ```bash
+   npm run bundle
+   npx @yao-pkg/pkg dist/bundle.cjs --no-bytecode --public --targets node22-linux-x64 --output reveal2video
    ```
    *(Replace `linux` with `macos` or `win` as needed).*
 
-   > [!NOTE]
-   > You might see warnings like `Failed to make bytecode` for `typed-query-selector`. These are caused by Puppeteer's TypeScript definition files and **can be safely ignored**. The resulting binary will function correctly.
-
-3. Run the binary:
+2. Run the binary:
    ```bash
    ./reveal2video /path/to/slideshow.html
    ```
@@ -111,7 +112,7 @@ To run the tool from anywhere in your terminal without specifying the path to th
 
 Now you can simply run `reveal2video slideshow.html` from any directory.
 
-:bulb: Tip: to use puppeteer's chromium, you can find out its path by running `node -e 'console.log(require("puppeteer").executablePath())'` in a shell and provide the resulting path with the `--browser` flag to the reveal2video executable.
+:bulb: Tip: to use puppeteer's chromium, you can find out its path by running `node --input-type=module -e 'import puppeteer from "puppeteer"; console.log(await puppeteer.executablePath())'` in a shell and provide the resulting path with the `--browser` flag to the reveal2video executable.
 
 ## Technical Specifications
 

@@ -1,8 +1,12 @@
-const test = require('node:test');
-const assert = require('node:assert');
-const { spawnSync } = require('node:child_process');
-const fs = require('node:fs');
-const path = require('node:path');
+import test from 'node:test';
+import assert from 'node:assert';
+import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const CLI_PATH = path.resolve(__dirname, '../reveal2video.js');
 const FIXTURES_DIR = path.resolve(__dirname, 'fixtures');

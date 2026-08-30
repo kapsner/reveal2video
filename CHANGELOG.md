@@ -8,13 +8,15 @@
 
 ### New Features
 
-- added dry-run for fragment-wise pdf-generation (ddbfd01)
+- added dry-run for fragment-wise pdf-generation (6bf368f)
 - constant video framerate, high-res capturing, full-hd video-rendering (0e9f3d8)
 - improved error handling (71e3e96)
 - parallel rendering for increased performance (08052dc)
 
 ### Other changes
 
+- **deps**: updated dependencies (0615bf7)
+- update README.md (6f6f5d0)
 - finished renaming (29bee13)
 - added build.sh script (b0d7021)
 - updated pre-commit ver (dd39ee5)

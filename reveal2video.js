@@ -6,11 +6,11 @@
  * Usage: ./reveal2video.js <html-file> [output.mkv]
  */
 
-const puppeteer = require('puppeteer');
-const { spawnSync, spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import puppeteer from 'puppeteer';
+import { spawnSync, spawn } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
 // Constants for high-quality encoding
 const CAPTURE_WIDTH = 2560;
@@ -185,7 +185,7 @@ async function run() {
     if (disableSetuidSandbox) puppeteerArgs.push('--disable-setuid-sandbox');
 
     const launchOptions = {
-      headless: "new",
+      headless: true,
       args: puppeteerArgs
     };
 
@@ -204,10 +204,20 @@ async function run() {
     await page.setViewport({ width: CAPTURE_WIDTH, height: CAPTURE_HEIGHT });
 
     console.log(`>>> Loading Slideshow: ${htmlFile}...`);
-    await page.goto(`file://${htmlFile}`, { waitUntil: 'networkidle2' });
+    await page.goto(`file://${htmlFile}`, { waitUntil: ['load', 'networkidle2'] });
 
     // Wait for Reveal to be ready
-    await page.waitForFunction('typeof Reveal !== "undefined" && Reveal.isReady()', { timeout: 10000 });
+    const waitStart = Date.now();
+    let isReady = false;
+    while (!isReady && (Date.now() - waitStart < 15000)) {
+      try {
+        isReady = await page.evaluate('typeof Reveal !== "undefined" && typeof Reveal.isReady === "function" && Reveal.isReady()');
+      } catch (e) {}
+      if (!isReady) await new Promise(r => setTimeout(r, 100));
+    }
+    if (!isReady) {
+      throw new Error('Timed out waiting for Reveal.js to be ready.');
+    }
 
     // Inject CSS to disable transitions and animations for instant rendering
     await page.addStyleTag({
